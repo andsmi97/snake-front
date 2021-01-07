@@ -9,10 +9,10 @@ import {
   BORDER_SIZE,
 } from "./constants.js";
 import * as tf from "@tensorflow/tfjs";
-
+import * as seedrandom from "seedrandom";
 export class Snake {
   players = ["player", "player2"];
-
+  seed = 0;
   initialState = {
     gameStatus: GAME_STATE.PAUSE,
     winner: "none", // one of "none", "player", "player2"
@@ -108,7 +108,7 @@ export class Snake {
   };
   initialize = (ctx) => {
     this.ctx = ctx;
-    this.generateFoodPosition();
+    // this.generateFoodPosition();
     this.initialized = true;
   };
   distanceBetweenHeads = () => {
@@ -269,7 +269,16 @@ export class Snake {
     this.state.gameStatus = GAME_STATE.PAUSE;
   };
 
-  startGame = () => {
+  startGame = (seed) => {
+    this.state.gameStatus = GAME_STATE.PLAY;
+    clearInterval(this.gameTimer);
+    this.gameTimer = setInterval(this.update, 200);
+    this.seed = seed;
+    seedrandom(seed);
+    this.generateFoodPosition();
+  };
+
+  continueGame = () => {
     this.state.gameStatus = GAME_STATE.PLAY;
     clearInterval(this.gameTimer);
     this.gameTimer = setInterval(this.update, 200);
@@ -308,7 +317,7 @@ export class Snake {
     this.ctx.clearRect(0, 0, this.ctx.canvas.width, this.ctx.canvas.height);
     clearInterval(this.gameTimer);
     this.state = { ...JSON.parse(JSON.stringify(this.initialState)) };
-    this.generateFoodPosition();
+    // this.generateFoodPosition();
   };
 
   /**

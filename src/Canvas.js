@@ -2,18 +2,20 @@ import React, { useRef, useEffect, useState } from "react";
 import keys from "./keycodes.js";
 import { Snake } from "./snake";
 import KeyboardEventHandler from "react-keyboard-event-handler";
-import { DIRECTIONS } from "./constants";
+import { DIRECTIONS, GAME_STATE } from "./constants";
 import io from "socket.io-client";
 
-const socket = io("http://95f18594e8f8.ngrok.io");
+const socket = io("https://95f18594e8f8.ngrok.io");
+// const socket = io("http://localhost:8080");
 
 let game = new Snake();
 
 const Canvas = (props) => {
   const [player, setCurrentPlayer] = useState("player");
   const [winner, setWinner] = useState(game.getWinner());
+  const [gameStatus, setGameStatus] = useState(game.getStatus());
   const [time, setTime] = useState(60);
-  const [timerStatus, setTimer] = useState(false);
+  const [timerStatus, setTimerStatus] = useState(false);
   const [points, setPoints] = useState(game.getPlayersLength());
   const canvasRef = useRef(null);
 
@@ -22,46 +24,62 @@ const Canvas = (props) => {
     socket.on("action", ({ player, direction }) => {
       game.changeDirection(player, direction);
     });
-    socket.on("start", (message) => {
+
+    socket.on("start", ({ message, seed }) => {
       console.log(message);
-      setTimer(true);
+      setTimerStatus(true);
       game.startGame();
     });
+
     socket.on("pause", (message) => {
       console.log(message);
-      setTimer(false);
+      setTimerStatus(false);
       game.pauseGame();
     });
-    socket.on("retart", (message) => {
+
+    socket.on("reset", (message) => {
       console.log(message);
       setTime(60);
-      setTimer(false);
+      setTimerStatus(false);
       game.restartGame();
+    });
+
+    socket.on("continue", (message) => {
+      console.log(message);
+      setTimerStatus(true);
+      game.continueGame();
     });
 
     return () => {
       socket.removeListener("action");
       socket.removeListener("start");
       socket.removeListener("pause");
-      socket.removeListener("restart");
+      socket.removeListener("continue");
+      socket.removeListener("reset");
     };
   }, []);
 
   //ending game by timer
   useEffect(() => {
     if (winner !== "none") {
-      setTimer(false);
+      setTimerStatus(false);
     }
   }, [winner]);
 
   const startGame = () => {
-    socket.emit("start", `${player} started`);
+    socket.emit("start", { message: `${player} started`, seed: Math.random() });
   };
+
   const pauseGame = () => {
     socket.emit("pause", `${player} paused`);
   };
-  const restartGame = () => {
-    socket.emit("restart", `${player} restarted`);
+
+  const resetGame = () => {
+    socket.emit("reset", `${player} reseted`);
+  };
+
+  const continueGame = () => {
+    socket.emit("continue", `${player} continued`);
   };
 
   //countdown
@@ -72,7 +90,7 @@ const Canvas = (props) => {
       }
       if (time === 0) {
         game.stopGame();
-        setTimer(false);
+        setTimerStatus(false);
       }
     }, 1000);
 
@@ -86,6 +104,7 @@ const Canvas = (props) => {
     let timer2 = setInterval(() => {
       setWinner(game.getWinner());
       setPoints(game.getPlayersLength());
+      setGameStatus(game.getStatus());
     }, 200);
 
     return () => {
@@ -133,6 +152,14 @@ const Canvas = (props) => {
     }
   };
 
+  const renderActionButton = () => {
+    if (gameStatus === GAME_STATE.PLAY) {
+      <button onClick={pauseGame}>Pause</button>;
+    } else if (gameStatus === GAME_STATE.PAUSE) {
+      <button onClick={continueGame}>Continue</button>;
+    }
+    return <button onClick={startGame}>Start</button>;
+  };
   return (
     <>
       <KeyboardEventHandler
@@ -145,9 +172,8 @@ const Canvas = (props) => {
           <p>{points ? `${points.p1} ${player} ${points.p2}` : player}</p>
           <p>Winner: {winner !== "none" ? winner : ""}</p>
           <p>{time}</p>
-          <button onClick={startGame}>Start</button>
-          <button onClick={pauseGame}>Pause</button>
-          <button onClick={restartGame}>Restart</button>
+          {renderActionButton()}
+          <button onClick={resetGame}>Reset</button>
           <button onClick={changePlayer}>changePlayer</button>
         </div>
         <div>
