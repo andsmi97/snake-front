@@ -17,21 +17,53 @@ const Canvas = (props) => {
   const [points, setPoints] = useState(game.getPlayersLength());
   const canvasRef = useRef(null);
 
+  //action emmiter
   useEffect(() => {
     socket.on("action", ({ player, direction }) => {
-      console.log(player, direction);
       game.changeDirection(player, direction);
     });
+    socket.on("start", (message) => {
+      console.log(message);
+      setTimer(true);
+      game.startGame();
+    });
+    socket.on("pause", (message) => {
+      console.log(message);
+      setTimer(false);
+      game.pauseGame();
+    });
+    socket.on("retart", (message) => {
+      console.log(message);
+      setTime(60);
+      setTimer(false);
+      game.restartGame();
+    });
+
     return () => {
       socket.removeListener("action");
+      socket.removeListener("start");
+      socket.removeListener("pause");
+      socket.removeListener("restart");
     };
   }, []);
 
+  //ending game by timer
   useEffect(() => {
     if (winner !== "none") {
       setTimer(false);
     }
   }, [winner]);
+
+  const startGame = () => {
+    socket.emit("start", `${player} started`);
+  };
+  const pauseGame = () => {
+    socket.emit("pause", `${player} paused`);
+  };
+  const restartGame = () => {
+    socket.emit("restart", `${player} restarted`);
+  };
+
   //countdown
   useEffect(() => {
     let timer1 = setInterval(() => {
@@ -113,35 +145,13 @@ const Canvas = (props) => {
           <p>{points ? `${points.p1} ${player} ${points.p2}` : player}</p>
           <p>Winner: {winner !== "none" ? winner : ""}</p>
           <p>{time}</p>
-          <button
-            onClick={() => {
-              setTimer(true);
-              game.startGame();
-            }}
-          >
-            Start
-          </button>
-          <button
-            onClick={() => {
-              setTimer(false);
-              game.pauseGame();
-            }}
-          >
-            Pause
-          </button>
-          <button
-            onClick={() => {
-              setTime(60);
-              setTimer(false);
-              game.restartGame();
-            }}
-          >
-            Restart
-          </button>
+          <button onClick={startGame}>Start</button>
+          <button onClick={pauseGame}>Pause</button>
+          <button onClick={restartGame}>Restart</button>
           <button onClick={changePlayer}>changePlayer</button>
         </div>
         <div>
-          <canvas ref={canvasRef} {...props} />
+          <canvas ref={canvasRef} {...props} id="canvas" />
         </div>
       </div>
     </>
