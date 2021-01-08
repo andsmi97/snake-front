@@ -12,7 +12,7 @@ import * as tf from "@tensorflow/tfjs";
 import * as seedrandom from "seedrandom";
 export class Snake {
   players = ["player", "player2"];
-  seed = 0;
+  rng;
   initialState = {
     gameStatus: GAME_STATE.PAUSE,
     winner: "none", // one of "none", "player", "player2"
@@ -273,8 +273,8 @@ export class Snake {
     this.state.gameStatus = GAME_STATE.PLAY;
     clearInterval(this.gameTimer);
     this.gameTimer = setInterval(this.update, 200);
-    this.seed = seed;
-    seedrandom(seed);
+    this.rng = seedrandom(seed);
+
     this.generateFoodPosition();
   };
 
@@ -352,7 +352,7 @@ export class Snake {
   getRandomCirclePosition(max) {
     let rand = 0;
     do {
-      rand = Math.floor(Math.floor(Math.random() * Math.floor(max)));
+      rand = Math.floor(Math.floor(this.rng() * Math.floor(max)));
     } while (rand % 10 !== 5);
     return rand;
   }

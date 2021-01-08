@@ -5,8 +5,9 @@ import KeyboardEventHandler from "react-keyboard-event-handler";
 import { DIRECTIONS, GAME_STATE } from "./constants";
 import io from "socket.io-client";
 
-const socket = io("https://95f18594e8f8.ngrok.io");
+// const socket = io("https://95f18594e8f8.ngrok.io");
 // const socket = io("http://localhost:8080");
+const socket = io("https://snake-online.ru");
 
 let game = new Snake();
 
@@ -28,7 +29,7 @@ const Canvas = (props) => {
     socket.on("start", ({ message, seed }) => {
       console.log(message);
       setTimerStatus(true);
-      game.startGame();
+      game.startGame(seed);
     });
 
     socket.on("pause", (message) => {
@@ -169,7 +170,9 @@ const Canvas = (props) => {
       />
       <div className="game-container">
         <div>
-          <p>{points ? `${points.p1} ${player} ${points.p2}` : player}</p>
+          <p>{`${points.p1} ${player === "player" ? "blue" : "green"} ${
+            points.p2
+          }`}</p>
           <p>Winner: {winner !== "none" ? winner : ""}</p>
           <p>{time}</p>
           {renderActionButton()}
