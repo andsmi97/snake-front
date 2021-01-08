@@ -1,4 +1,3 @@
-// const canvas = document.getElementById("canvas");
 export const RIGHT_BORDER = 250;
 export const BOTTOM_BORDER = 250;
 export const BORDER_SIZE = 250;
